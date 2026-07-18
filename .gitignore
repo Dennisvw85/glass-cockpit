@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.cockpit-token
+.DS_Store
+.cockpit-agent-settings.json
+service/cockpit.log
+service/cockpit.err

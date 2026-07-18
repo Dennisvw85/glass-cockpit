@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    /* 16px here == ~10px on a 102ppi desktop monitor, matched for apparent size
+       on the iPad Mini 4's 163 CSS ppi panel. Density control overrides this. */
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-ink-bg text-ink-text font-mono;
+    -webkit-font-smoothing: antialiased;
+    /* Kiosk panel: no rubber-band, no long-press callout. */
+    overscroll-behavior: none;
+    -webkit-touch-callout: none;
+  }
+}
