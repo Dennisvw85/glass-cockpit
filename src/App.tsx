@@ -23,20 +23,37 @@ function useClock(intervalMs: number): number {
 const VIEW_KEY = 'cockpit.view'
 type View = 'monitor' | 'console'
 
+const LAYOUT_KEY = 'cockpit.layout'
+type Layout = 'ipad' | 'iphone'
+
+/** Portrait stacks everything, so cap the session list to leave room for the feed. */
+const PORTRAIT_SESSIONS = 2
+
 export function App() {
-  const { sessions, agents, permissions, events, limits, updatedAt, connected, authError } =
-    useCockpit()
+  const { sessions, agents, permissions, events, limits, connected, authError } = useCockpit()
   const now = useClock(1000)
   const [sound, setSound] = useState(() => localStorage.getItem(SOUND_KEY) === '1')
   const [view, setView] = useState<View>(
     () => (localStorage.getItem(VIEW_KEY) as View) ?? 'monitor',
   )
+  // Default to whichever layout matches the device's shape; the switch overrides.
+  const [layout, setLayout] = useState<Layout>(() => {
+    const saved = localStorage.getItem(LAYOUT_KEY)
+    if (saved === 'ipad' || saved === 'iphone') return saved
+    return typeof window !== 'undefined' && window.innerWidth < window.innerHeight
+      ? 'iphone'
+      : 'ipad'
+  })
   const previouslyBlocked = useRef<Set<string>>(new Set())
   const previousPerms = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     localStorage.setItem(VIEW_KEY, view)
   }, [view])
+
+  useEffect(() => {
+    localStorage.setItem(LAYOUT_KEY, layout)
+  }, [layout])
 
   // Beep only on the rising edge of a block, not for every frame it stays blocked.
   useEffect(() => {
@@ -88,8 +105,15 @@ export function App() {
         : null
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <header className="flex items-center justify-between px-3 py-2 border-b border-ink-line shrink-0">
+    <div
+      className={`h-screen flex flex-col overflow-hidden ${
+        layout === 'iphone' ? 'max-w-[430px] mx-auto border-x border-ink-line' : ''
+      }`}
+    >
+      <header
+        className="flex items-center justify-between gap-x-3 gap-y-1 flex-wrap px-3 pb-2 border-b border-ink-line shrink-0"
+        style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
+      >
         <div className="flex items-baseline gap-2">
           <h1 className="text-base">Cockpit</h1>
           {(['monitor', 'console'] as const).map((v) => (
@@ -101,9 +125,6 @@ export function App() {
               {v}
             </button>
           ))}
-          <span className="text-xs text-ink-faint tabular-nums">
-            {view === 'console' ? `${agents.length} owned` : `${sessions.length} live`}
-          </span>
           {blockedCount + permissions.length > 0 && (
             <span className="text-xs text-accent">
               {blockedCount + permissions.length} needs you
@@ -111,6 +132,20 @@ export function App() {
           )}
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            {(['ipad', 'iphone'] as const).map((d) => (
+              <button
+                key={d}
+                onClick={() => setLayout(d)}
+                title={d === 'ipad' ? 'iPad Mini 4 · landscape' : 'iPhone 11 · portrait'}
+                className={`px-3 min-h-[44px] rounded border text-xs ${
+                  d === layout ? 'border-accent text-accent' : 'border-ink-line text-ink-faint'
+                }`}
+              >
+                {d === 'ipad' ? 'iPad' : 'iPhone'}
+              </button>
+            ))}
+          </div>
           <button
             onClick={toggleSound}
             className={`px-3 min-h-[44px] rounded border text-xs ${
@@ -140,7 +175,33 @@ export function App() {
         <div className="flex-1 min-h-0">
           <Console agents={agents} />
         </div>
+      ) : layout === 'iphone' ? (
+        // Portrait: everything stacked in one scrolling column.
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+          <LimitsHero limits={limits} now={now} compact />
+          <div className="border-t border-ink-line p-3">
+            {sessions.length === 0 ? (
+              <p className="text-ink-faint text-sm">
+                {connected ? 'No live Claude Code sessions.' : 'Connecting…'}
+              </p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {/* Only the 2 most recent, so the activity feed still fits on screen. */}
+                {sessions.slice(0, PORTRAIT_SESSIONS).map((s) => (
+                  <SessionCard key={s.sessionId} session={s} now={now} compact />
+                ))}
+                {sessions.length > PORTRAIT_SESSIONS && (
+                  <p className="text-xs text-ink-faint">
+                    +{sessions.length - PORTRAIT_SESSIONS} more running
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          <Feed events={events} now={now} block />
+        </div>
       ) : (
+        // Landscape: gauges over a two-column [sessions | feed].
         <div className="flex-1 flex flex-col min-h-0">
           <LimitsHero limits={limits} now={now} />
           <div className="flex-1 flex min-h-0 border-t border-ink-line">
@@ -162,7 +223,7 @@ export function App() {
         </div>
       )}
 
-      <StatusBar connected={connected} updatedAt={updatedAt} now={now} focus={focus} />
+      <StatusBar connected={connected} focus={focus} />
     </div>
   )
 }

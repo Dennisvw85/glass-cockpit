@@ -4,6 +4,8 @@ import type { CockpitEvent } from '../ws.ts'
 interface Props {
   events: CockpitEvent[]
   now: number
+  /** Full-width section below the sessions (portrait), vs. a fixed side rail. */
+  block?: boolean
 }
 
 const TAG_LABEL: Record<string, string> = {
@@ -17,9 +19,13 @@ const TAG_LABEL: Record<string, string> = {
 /** Only the blocked-on-you tags earn the accent; the rest stay quiet. */
 const LOUD = new Set(['permission_prompt', 'agent_needs_input'])
 
-export function Feed({ events, now }: Props) {
+export function Feed({ events, now, block }: Props) {
   return (
-    <aside className="w-64 shrink-0 border-l border-ink-line flex flex-col">
+    <aside
+      className={`flex flex-col ${
+        block ? 'w-full border-t border-ink-line' : 'w-64 shrink-0 border-l border-ink-line'
+      }`}
+    >
       <h2 className="text-xs text-ink-faint px-3 py-2 border-b border-ink-line">
         activity
       </h2>
