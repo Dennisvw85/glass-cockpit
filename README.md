@@ -1,7 +1,7 @@
 # Claude Cockpit
 
 ![Platform](https://img.shields.io/badge/platform-macOS-8a8a93)
-![Built for](https://img.shields.io/badge/built%20for-iPad%20Mini%204%20%C2%B7%20Safari%2015-d97757)
+![Built for](https://img.shields.io/badge/built%20for-iPad%20Mini%204%20%C2%B7%20iPhone%2011-d97757)
 ![React](https://img.shields.io/badge/React-18-149eca?logo=react&logoColor=white)
 ![Fastify](https://img.shields.io/badge/Fastify-5-000000?logo=fastify&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v3-38bdf8?logo=tailwindcss&logoColor=white)
@@ -9,15 +9,25 @@
 ![License](https://img.shields.io/badge/license-MIT-8a8a93)
 
 **A wall-mounted status board for [Claude Code](https://claude.com/claude-code).**
-Runs on an old iPad next to your desk and shows — at a glance — how much of your
-usage limits you've burned, what your live sessions are doing, and whether you're
-about to hit a wall. It can also *drive* Claude Code sessions, not just watch them.
+Runs on a spare iPad or iPhone next to your desk and shows — at a glance — how much
+of your usage limits you've burned, what your live sessions are doing, and whether
+you're about to hit a wall. It can also *drive* Claude Code sessions, not just
+watch them.
 
-![Claude Cockpit on an iPad Mini 4](docs/screenshot.png)
+![Claude Cockpit on an iPad Mini 4, landscape](docs/ipad.PNG)
+
+<p align="center">
+  <img src="docs/iphone.PNG" alt="Claude Cockpit on an iPhone 11, portrait" width="300">
+</p>
+
+<p align="center">
+  <em>One board, two layouts — landscape on the iPad, portrait on the phone.</em>
+</p>
 
 > Built to run on a **2015 iPad Mini 4** (iPadOS 15, Safari 15) sitting beside a
-> desktop monitor. Most of the non-obvious engineering choices exist to make a
-> modern dashboard render cleanly on that decade-old browser.
+> desktop monitor, with a portrait layout for an **iPhone 11**. Most of the
+> non-obvious engineering choices exist to make a modern dashboard render cleanly
+> on that decade-old browser.
 
 ---
 
@@ -42,6 +52,22 @@ The **console** view turns it into a remote control:
 - Switch **model** live, change **effort** (preserving the conversation),
   interrupt, or close.
 - **Approve or deny tool calls** from the iPad when a session needs permission.
+
+### Two layouts, one switch
+
+A control in the header toggles between the two device layouts. It defaults to
+whichever matches the viewport's aspect ratio — so a phone lands on portrait and a
+tablet on landscape — then remembers your choice.
+
+| | iPad (landscape) | iPhone (portrait) |
+|---|---|---|
+| Gauges | full size, in a row | smaller, three across |
+| Body | sessions ∣ activity feed, side by side | stacked: sessions, then the feed |
+| Sessions | all of them | the 2 most recent, so the feed stays on screen |
+| Width | fills the screen | a phone-width column, centred on wider screens |
+
+Both respect the iOS safe-area insets, so the header clears the notch and the
+footer clears the home indicator.
 
 ---
 
