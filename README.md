@@ -1,290 +1,186 @@
-# Claude Cockpit — HUD
+# Glass Cockpit
 
-> A modified build of **[hungnv26/claude-cockpit](https://github.com/hungnv26/claude-cockpit)**
-> by Hung Ngo, MIT-licensed. This copy restyles the board as a vector HUD and adds a
-> panel for [Antigravity](https://antigravity.google) (`agy`) delegation.
-> All of the original engineering — the session watcher, the usage poller, the
-> console, the launchd service — is Hung Ngo's work. See [License](#license).
+![Platform](https://img.shields.io/badge/macOS-05070a?style=flat-square)
+![Target](https://img.shields.io/badge/iPad%20Mini%204%20·%20Safari%2015-6fd3e8?style=flat-square)
+![React](https://img.shields.io/badge/React%2018-05070a?style=flat-square)
+![Fastify](https://img.shields.io/badge/Fastify%205-05070a?style=flat-square)
+![TypeScript](https://img.shields.io/badge/TypeScript%205-05070a?style=flat-square)
+![License](https://img.shields.io/badge/MIT-6fd3e8?style=flat-square)
 
-![Platform](https://img.shields.io/badge/platform-macOS-8a8a93)
-![Built for](https://img.shields.io/badge/built%20for-iPad%20Mini%204%20%C2%B7%20iPhone%2011-d97757)
-![React](https://img.shields.io/badge/React-18-149eca?logo=react&logoColor=white)
-![Fastify](https://img.shields.io/badge/Fastify-5-000000?logo=fastify&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-v3-38bdf8?logo=tailwindcss&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white)
-![License](https://img.shields.io/badge/license-MIT-8a8a93)
+**An instrument panel for [Claude Code](https://claude.com/claude-code), for the
+tablet you stopped using.**
 
-**A wall-mounted status board for [Claude Code](https://claude.com/claude-code).**
-Runs on a spare iPad or iPhone next to your desk and shows — at a glance — how much
-of your usage limits you've burned, what your live sessions are doing, and whether
-you're about to hit a wall. It can also *drive* Claude Code sessions, not just
-watch them.
+Aviation calls it a glass cockpit when the dials come out and vector displays go
+in. Same idea here: a spare iPad on the wall, showing how much of your rate limit
+is gone, which sessions are alive, which one is stuck waiting on you, and what
+your delegated work is costing — all of it legible from across the room, none of
+it needing a click.
 
-![The board in landscape, on an iPad](docs/board-landscape.png)
+![The board in landscape](docs/board-landscape.png)
 
 <p align="center">
-  <img src="docs/board-portrait.png" alt="The board in portrait, on a phone" width="300">
+  <img src="docs/board-portrait.png" alt="The board in portrait" width="300">
 </p>
 
-<p align="center">
-  <em>One board, two layouts — landscape on the iPad, portrait on the phone.
-  Screenshots use synthetic session data.</em>
-</p>
+<p align="center"><em>Landscape on a tablet, portrait on a phone. Screenshots run on synthetic data.</em></p>
 
-> Built to run on a **2015 iPad Mini 4** (iPadOS 15, Safari 15) sitting beside a
-> desktop monitor, with a portrait layout for an **iPhone 11**. Most of the
-> non-obvious engineering choices exist to make a modern dashboard render cleanly
-> on that decade-old browser.
+> **Credit where it's due.** This is a modified build of
+> **[hungnv26/claude-cockpit](https://github.com/hungnv26/claude-cockpit)** by
+> Hung Ngo, used under MIT. Every hard part — the session watcher, the transcript
+> tailer, the self-refreshing Keychain token, the console, the launchd service —
+> is his. What's mine is the skin and the agy panel, both described below. His
+> README is worth reading for the engineering rationale; this one won't repeat it.
 
 ---
 
-## What this copy changes
+## The instrument panel
 
-- **A vector-HUD skin.** Cyan hairlines, bracketed panel corners, tick-ring
-  gauges and a faint survey grid, with Chakra Petch for the chrome (it falls back
-  to the system mono stack when offline). The information architecture is
-  unchanged — only how it reads from across a room.
-- **An agy delegation panel.** Reports what was handed to
-  [Antigravity](https://antigravity.google) and what that avoided paying on the
-  orchestrator model. See below.
-- Scrollbars are hidden (nobody scrolls a wall display), and a flex overflow that
-  pushed the activity rail off-screen is fixed.
+Everything is drawn in one visual language: hairline boxes with the corners cut
+away, tick rings around every gauge, tracked-out caps for labels, and a survey
+grid so faint you notice it only as depth. One accent per meaning and no more —
+cyan is structure, green is running, amber is *you are the bottleneck*, violet is
+delegated work.
 
-### The agy panel
+| | |
+|---|---|
+| **Rate limits** | Your 5-hour and 7-day windows as tick-ring gauges, each counting down to reset. They go amber near the ceiling. |
+| **Sessions** | Every live Claude Code session — the desktop app's included — with a status rail down the left edge you can read from two metres away. |
+| **Delegation** | What agy was handed and what that saved. Details below. |
+| **Log** | Session events as they land, timestamped like a flight recorder rather than "3m ago". |
+| **Context** | A segmented scale along the bottom edge, ticked every 40px, for the focused session's context window. |
 
-It reads two independent sources, because a given setup usually produces only one:
+Tap **console** and it stops being a dashboard: spawn a session the board owns,
+prompt it, switch model or effort mid-conversation, and approve or deny tool calls
+from the couch.
+
+### Delegation, priced honestly
+
+If you hand work to [Antigravity](https://antigravity.google) (`agy`), this panel
+tells you what that was worth. It reads whichever of these your setup produces:
 
 | Source | Written by |
 |---|---|
-| `~/.claude/agy-usage.log` | `agy-delegate` on every **synchronous** run, when `AGY_USAGE_LOG` is set |
-| `~/.antigravity-jobs/` | `agy-job start`, for **background** jobs |
+| `~/.claude/agy-usage.log` | `agy-delegate`, on every synchronous run, when `AGY_USAGE_LOG` is set |
+| `~/.antigravity-jobs/` | `agy-job start`, for background jobs |
 
-It leads with spend avoided rather than a quota gauge, because **agy exposes no
-usage or rate-limit API** — there is no `agy usage` subcommand and the desktop app
-stores only Electron state, so a limit ring would be fiction.
+It leads with **spend avoided on the orchestrator model**, not a quota gauge —
+because agy publishes no usage or rate-limit API. There is no `agy usage`
+subcommand and the desktop app keeps only Electron state, so any limit ring here
+would be invented. Two caveats the UI states rather than hides:
 
-Two honest caveats, both surfaced in the UI:
+- **Costs are estimates** (`EST`), priced from the plugin's own `prices.json` at
+  the default **flash** tier. Neither source records a tier per run, so anything
+  you ran at `--tier pro` reads low.
+- **Totals are cumulative, not daily.** The usage log has no per-line timestamps —
+  only the file's mtime, which dates your most recent delegation.
 
-- **Costs are estimates** (`EST`). They are priced from the plugin's own
-  `prices.json` at the default **flash** tier, because neither source records a
-  tier per run. Work actually run at `--tier pro` therefore reads low.
-- **Totals are cumulative, not daily.** The usage log carries no per-line
-  timestamps; only the file's mtime, which dates the most recent delegation.
-
-The panel hides itself entirely when nothing has been delegated, so a machine that
-never uses agy shows no dead space.
+Never delegated anything? The panel doesn't render. No dead rectangle on your wall.
 
 ---
 
-## What it shows
+## Running it
 
-The **monitor** view is a read-only glance board:
-
-- **Usage gauges** — your rolling **5-hour** and **7-day** plan limits, plus a
-  model-scoped **Fable** gauge, each with a live reset countdown. Turn amber as
-  you approach the ceiling.
-- **Live sessions** — every running Claude Code session (including ones started
-  by the desktop app), with its model and state.
-- **Activity feed** — a running log of session events (turn finished, needs
-  approval, went idle) pushed in real time.
-- **Status footer** — a persistent `LIVE / OFFLINE` indicator, the focused
-  session's model and effort, and a full-width **Context Window** bar showing how
-  full the current context is.
-
-The **console** view turns it into a remote control:
-
-- Spawn a Claude Code session the dashboard owns, and prompt it from the tablet.
-- Switch **model** live, change **effort** (preserving the conversation),
-  interrupt, or close.
-- **Approve or deny tool calls** from the iPad when a session needs permission.
-
-### Two layouts, one switch
-
-A control in the header toggles between the two device layouts. It defaults to
-whichever matches the viewport's aspect ratio — so a phone lands on portrait and a
-tablet on landscape — then remembers your choice.
-
-| | iPad (landscape) | iPhone (portrait) |
-|---|---|---|
-| Gauges | full size, in a row | smaller, three across |
-| Body | sessions ∣ activity feed, side by side | stacked: sessions, then the feed |
-| Sessions | all of them | the 2 most recent, so the feed stays on screen |
-| Width | fills the screen | a phone-width column, centred on wider screens |
-
-Both respect the iOS safe-area insets, so the header clears the notch and the
-footer clears the home indicator.
-
----
-
-## Tech stack
-
-| Layer | Choice | Why |
-|---|---|---|
-| Frontend | **React 18 + TypeScript**, built with **Vite 5** | Fast dev loop; small self-contained bundle (~50 KB gzipped). |
-| Styling | **Tailwind CSS v3** | **Not v4** — v4 requires Safari 16.4 and would render unstyled on the iPad Mini 4. This pin is load-bearing. |
-| Backend | **Fastify 5** + **`ws`** (WebSocket) | A long-lived process that tails files, watches sessions, and pushes updates — the opposite grain to a request/response framework like Next.js. |
-| File watching | **chokidar** | Watches `~/.claude` for session and transcript changes. |
-| Runtime | **Node.js** via **tsx** (run TypeScript directly) | No separate build step for the server. |
-| Process mgmt | **launchd** (macOS LaunchAgent) | Auto-start at login, restart on crash, survive reboots. |
-| Transport | One WebSocket, updates **coalesced to 250 ms** | The iPad's 2015 A8 chip (2 GB RAM) would choke on a socket firing per token. |
-
-Everything is served on **one port (5200)** in production — the Vite-built SPA and
-the API/WebSocket share the same Fastify server.
-
----
-
-## How it works
-
-Claude Cockpit reads local state that Claude Code already writes to `~/.claude`,
-and (optionally) drives new sessions it spawns itself. There are two planes:
-
-### Observe plane (read-only, works for every session)
-
-- **Session registry** — watches `~/.claude/sessions/*.json` for live sessions
-  (pid, cwd, model, version), confirming liveness with a `process.kill(pid, 0)`.
-- **Transcript tailer** — incrementally tails
-  `~/.claude/projects/**/<id>.jsonl` from a byte offset and reads the newest
-  assistant turn for model + token usage. Sub-agent turns are skipped so context
-  reflects the main thread.
-- **Plan usage** — fetches your limits from the Claude usage API using the OAuth
-  token in your macOS Keychain, and **auto-refreshes** it so the panel never goes
-  stale (see Design notes).
-- **Context window** — the current context vs. the model's real window, pulled
-  live from the Models API (`max_input_tokens`), not a hardcoded number.
-
-### Control plane (drives sessions the app owns)
-
-Desktop sessions are owned by the Claude Code app over stdio pipes and can't be
-driven from outside — so the console view **spawns its own** sessions via
-`claude -p --input-format stream-json --output-format stream-json` and owns the
-process. Those sessions can be prompted, switched, and gated for permission, and
-they also show up on the monitor like any other session.
-
-### Notifications
-
-A set of Claude Code **hooks** (`Notification`, `Stop`, `UserPromptSubmit`) POST
-to the server, which drives the activity feed, the "needs you" indicators, and an
-in-page sound alert. (Web Push isn't available on Safari 15, so alerts are
-in-page.)
-
----
-
-## Getting started
-
-**Prerequisites:** macOS, Node.js 20+, [pnpm](https://pnpm.io), and Claude Code
-installed. The usage panel needs a one-time `claude auth login`.
+**You need:** macOS, Node 20+, [pnpm](https://pnpm.io), Claude Code, and one
+`claude auth login` so the usage gauges have a token.
 
 ```sh
 pnpm install
-pnpm dev            # Vite on :5199, API + WebSocket on :5200
+pnpm dev                # web on :5199, API + socket on :5200
 ```
 
-Open the URL the server prints (it includes an access token):
+The server prints a URL with an access token in it. Open that on the tablet once,
+then **Share → Add to Home Screen** for a fullscreen kiosk with no browser chrome.
 
-```
-http://<your-mac-ip>:5200/?t=<token>
-```
-
-On the iPad, open that URL once in Safari, then **Share → Add to Home Screen** for
-a fullscreen kiosk. Set **Auto-Lock → Never** and keep it charging.
-
-### Run it permanently (macOS)
-
-Installed as a per-user LaunchAgent — starts at login, restarts on crash, survives
-reboots. Production build, everything on **:5200**. `service/install.sh` generates
-the plist with absolute paths for your checkout and loads it.
+### Leaving it up
 
 ```sh
 pnpm build
-sh service/install.sh
+sh service/install.sh   # per-user LaunchAgent: starts at login, restarts on crash
 ```
 
-| Task | Command |
+| | |
 |---|---|
-| Restart (after `pnpm build`) | `launchctl kickstart -k gui/$(id -u)/com.cockpit.server` |
+| Restart after a rebuild | `launchctl kickstart -k gui/$(id -u)/com.cockpit.server` |
 | Stop | `launchctl bootout gui/$(id -u)/com.cockpit.server` |
-| Logs | `tail -f service/cockpit.log` |
+| Watch the logs | `tail -f service/cockpit.log` |
+
+Two things that will bite you eventually. **The Mac has to stay awake** —
+`sudo pmset -a sleep 0` handles it; the display may still sleep. And **the LAN
+address is DHCP**, so a router reboot can break the home-screen shortcut. Reserve
+the address, or use the Bonjour name (`your-mac.local:5200`) instead.
+
+If the gauges ever read *usage temporarily unavailable*: a restart empties the
+usage cache, and restarting repeatedly earns a 429 with a three-minute backoff.
+It clears itself. Wait rather than restart again.
 
 ---
 
-## Project structure
+## Layout
+
+The header switches between the two shapes, and defaults to whichever matches the
+viewport — a phone lands in portrait, a tablet in landscape.
+
+| | Landscape | Portrait |
+|---|---|---|
+| Gauges | full size, side by side | smaller, in a row |
+| Body | sessions beside a right rail | one scrolling column |
+| Sessions | all of them | the two most recent |
+| Rail | delegation above the log | stacked under the sessions |
+
+Both honour the iOS safe areas, so the header clears the notch and the footer
+clears the home indicator.
+
+---
+
+## What's under it
 
 ```
-server/            Fastify + WebSocket backend (TypeScript, run via tsx)
-  hub.ts             aggregates all state, coalesces updates, broadcasts
-  sessions.ts        watches ~/.claude/sessions registry
-  transcript.ts      incremental JSONL tailer for model + token usage
-  limits.ts          plan-usage gauges (5h / 7d / Fable) from the usage API
-  credential.ts      Keychain read + self-refreshing OAuth token
-  models.ts          live context-window sizes from the Models API
-  agent.ts / agents.ts   spawns and drives owned Claude Code sessions
-  permissions.ts     holds tool calls for iPad approval
-  agyjobs.ts         agy usage log + background-job registry     [added here]
-  index.ts           HTTP/WS server, token gate, control endpoints
+server/                Fastify + WebSocket, TypeScript via tsx
+  hub.ts                 collects state, coalesces churn, broadcasts
+  sessions.ts            watches the ~/.claude/sessions registry
+  transcript.ts          tails session JSONL for model and token counts
+  limits.ts              rate-limit gauges from the usage API
+  credential.ts          Keychain read, self-refreshing OAuth token
+  agyjobs.ts           ← delegation: usage log + job registry
+  agent(s).ts            spawns and drives sessions the board owns
+  permissions.ts         parks tool calls for tablet approval
+  index.ts               HTTP/WS, token gate, control routes
 
-src/               React + Tailwind frontend
-  App.tsx            layout + view switching
-  components/        LimitsHero, StatusBar, SessionCard, Feed, Console, …
-                     AgyPanel                                    [added here]
-  ws.ts              WebSocket hook + shared types
+src/                   React + Tailwind
+  App.tsx                layout and view switching
+  components/AgyPanel  ← the delegation panel
+  components/            LimitsHero, SessionCard, Feed, StatusBar, Console
+  index.css              the HUD primitives: brackets, grid, rules, labels
 
-hooks/             Claude Code hooks that POST to the server
-  notify.mjs         Notification / Stop / UserPromptSubmit → activity feed
-  permission.mjs     PreToolUse → iPad allow/deny
-
-service/           launchd launcher (run.sh) + logs
+hooks/                 Claude Code hooks that POST events in
+service/               launchd plist generator and logs
 ```
 
----
-
-## Design notes
-
-The interesting decisions, most of them forced by the Safari 15 target or by how
-Claude Code actually behaves (each verified against the real CLI, not assumed):
-
-- **Tailwind v3, not v4.** v4 needs Safari 16.4; the iPad Mini 4 tops out at
-  iPadOS 15.8. Vite's `build.target` is pinned to `['es2020','safari15']` too.
-- **Touch targets are 44 px in absolute pixels, not `rem`.** A fingertip doesn't
-  scale with the font-size control, and a density-scaled button was untappable.
-- **Updates coalesce at 250 ms** and the DOM is capped — the 2015 A8 can't take a
-  socket firing on every token.
-- **The usage token self-refreshes.** Its TTL is 8 h and the refresh token
-  *rotates* on every use, so the app writes the new token back to the shared
-  Keychain (an app-private copy would log out whichever party — app or CLI —
-  refreshed second). The Keychain entry also holds unrelated MCP tokens, so
-  write-back merges only the account fields.
-- **Context windows are fetched, never hardcoded.** Nearly every current model is
-  **1M** tokens, not 200k — hardcoding 200k under-reported Opus by 5×.
-- **Effort can't be changed live** (`set_model` works as a control request but
-  `set_effort` doesn't exist), so the effort control restarts the session with
-  `--resume`, which preserves the conversation.
-- **Permission approval rides on a `PreToolUse` hook**, not `can_use_tool` —
-  which never fires in `-p` mode. Returning `permissionDecision: allow` overrides
-  the CLI's silent auto-deny.
-- **Fail-safe hooks.** The notification and permission hooks run on every turn, so
-  every failure path (server down, bad JSON) exits cleanly and defers to Claude
-  Code's normal behavior — they never block a session or fabricate an approval.
+The skin lives almost entirely in `tailwind.config.js` and `src/index.css` — four
+utility classes and a palette. If you want the original look back, those two files
+are most of the way there.
 
 ---
 
-## Limitations
+## Known limits
 
-- **macOS only** — the usage token lives in the macOS Keychain and the service is
-  a launchd agent. Ports would be needed for Linux/Windows.
-- **Effort shows `—` on the monitor** for desktop sessions — it's set at spawn and
-  never written to disk, so an observer genuinely can't know it. It's live in the
-  console (where the app chose it).
-- **The Mac must be awake and on the LAN** for the iPad to reach it.
+- **macOS only.** The token lives in the Keychain and the service is a launchd
+  agent; other platforms would need porting.
+- **Effort reads `—` for desktop sessions.** It's chosen at spawn and never
+  written to disk, so an observer genuinely cannot know it. It's live in the
+  console, where the board picked it itself.
+- **The Mac must be awake and reachable** on the same network as the tablet.
+- **`backdrop-filter` and `:has()` are avoided** throughout — the target is Safari
+  15 on a 2015 iPad Mini 4, and it shows.
 
 ---
 
 ## License
 
-[MIT](LICENSE) © Hung Ngo — the original work, whose copyright notice is retained
-in full. This repository is a modified copy, redistributed under the same MIT
-terms; the modifications described in [What this copy changes](#what-this-copy-changes)
-are offered under those terms too.
+[MIT](LICENSE) © Hung Ngo, whose copyright notice is retained in full. This is a
+modified copy redistributed under the same terms; the changes described above are
+offered under them too.
 
-Not affiliated with Anthropic. It reads local files Claude Code writes and calls
-the same undocumented endpoints the CLI uses — those can change without notice.
-Use at your own risk.
+Not affiliated with Anthropic or Google. It reads local files Claude Code writes
+and calls the same undocumented endpoints its CLI does — those can change without
+warning. Use at your own risk.
