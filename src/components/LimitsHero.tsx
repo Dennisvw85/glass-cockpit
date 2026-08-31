@@ -11,6 +11,12 @@ interface Props {
 const R = 40
 const CIRC = 2 * Math.PI * R
 
+/** Outer tick ring: a dashed circle is 36 tick marks for the price of one node. */
+const TICK_R = 46
+const TICK_CIRC = 2 * Math.PI * TICK_R
+const TICK_ON = 1.5
+const TICK_GAP = TICK_CIRC / 36 - TICK_ON
+
 function Gauge({
   label,
   pct,
@@ -27,42 +33,53 @@ function Gauge({
   compact?: boolean
 }) {
   const p = Math.max(0, Math.min(100, pct)) / 100
-  const stroke = hot ? '#d9a441' : '#d97757'
-  const box = compact ? '6rem' : '9rem'
+  const stroke = hot ? '#d9a441' : accent ? '#d97757' : '#6fd3e8'
+  const box = compact ? '6rem' : '9.5rem'
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="relative" style={{ width: box, height: box }}>
-        <svg viewBox="0 0 96 96" className="w-full h-full">
-          <circle cx="48" cy="48" r={R} fill="none" stroke="#26262b" strokeWidth="8" />
+        <svg viewBox="0 0 100 100" className="w-full h-full">
           <circle
-            cx="48"
-            cy="48"
+            cx="50"
+            cy="50"
+            r={TICK_R}
+            fill="none"
+            stroke="#6fd3e8"
+            strokeOpacity="0.3"
+            strokeWidth="4"
+            strokeDasharray={`${TICK_ON} ${TICK_GAP}`}
+          />
+          <circle cx="50" cy="50" r={R} fill="none" stroke="#6fd3e8" strokeOpacity="0.13" strokeWidth="7" />
+          <circle
+            cx="50"
+            cy="50"
             r={R}
             fill="none"
             stroke={stroke}
-            strokeWidth="8"
-            strokeLinecap="round"
+            strokeWidth="7"
             strokeDasharray={CIRC}
             strokeDashoffset={CIRC * (1 - p)}
-            transform="rotate(-90 48 48)"
+            transform="rotate(-90 50 50)"
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span
-            className={`${compact ? 'text-2xl' : 'text-4xl'} tabular-nums ${
-              hot ? 'text-warn' : 'text-ink-text'
-            }`}
+            className={`font-display font-bold leading-none tabular-nums ${
+              compact ? 'text-2xl' : 'text-[2.6rem]'
+            } ${hot ? 'text-warn' : 'text-ink-text'}`}
           >
             {Math.round(pct)}
-            <span className={`text-ink-faint ${compact ? 'text-xs' : 'text-lg'}`}>%</span>
           </span>
+          {!compact && (
+            <span className="hud-label text-[0.6rem] text-ink-faint mt-0.5">percent</span>
+          )}
         </div>
       </div>
-      <div className={`${compact ? 'text-xs' : 'text-sm'} ${accent ? 'text-accent' : 'text-ink-muted'}`}>
+      <div className={`hud-label ${compact ? 'text-[0.65rem]' : 'text-xs'} text-ink-text`}>
         {label}
       </div>
       <div className="text-xs text-ink-faint tabular-nums h-4">
-        {resets ? `resets ${resets}` : ''}
+        {resets ? `reset T-${resets}` : ''}
       </div>
     </div>
   )
@@ -70,13 +87,13 @@ function Gauge({
 
 /**
  * The hero: usage-against-limit is the first thing you want from across the desk,
- * so the gauges lead. Model-scoped limits (Fable) render in accent to stand out
- * from the two headline windows.
+ * so the gauges lead. Model-scoped limits (Fable) render in the warm accent to
+ * stand out from the two cyan headline windows.
  */
 export function LimitsHero({ limits, now, compact }: Props) {
   if (limits.state !== 'ok') {
     return (
-      <div className="flex items-center justify-center py-6 text-sm text-ink-muted">
+      <div className="hud-label flex items-center justify-center py-6 text-xs text-ink-muted">
         plan usage — {limits.detail ?? limits.state}
       </div>
     )

@@ -43,11 +43,13 @@ export function StatusBar({ connected, focus }: Props) {
       {/* line 1 — status, with the Context Window label pushed right */}
       <div className="flex items-center gap-x-4 gap-y-1 flex-wrap text-base">
         <span className="flex items-center gap-2 shrink-0">
+          {/* Square, not round: the HUD has no soft edges. */}
           <span
-            className={`w-2.5 h-2.5 rounded-full ${connected ? 'bg-accent' : 'bg-warn animate-pulse'}`}
+            className={`w-2 h-2 ${connected ? 'bg-go' : 'bg-warn animate-pulse'}`}
+            style={connected ? { boxShadow: '0 0 8px #7ee787' } : undefined}
           />
-          <span className={connected ? 'text-accent' : 'text-warn'}>
-            {connected ? 'LIVE' : 'OFFLINE'}
+          <span className={`hud-label text-xs ${connected ? 'text-go' : 'text-warn'}`}>
+            {connected ? 'live' : 'offline'}
           </span>
         </span>
 
@@ -66,7 +68,7 @@ export function StatusBar({ connected, focus }: Props) {
         {hasCtx && (
           <>
             <span className="text-ink-line shrink-0">·</span>
-            <span className="text-ink-muted shrink-0">Context Window</span>
+            <span className="hud-label text-xs text-ink-faint shrink-0">context</span>
           </>
         )}
       </div>
@@ -74,16 +76,31 @@ export function StatusBar({ connected, focus }: Props) {
       {/* line 2 — the bar alone, along the bottom edge */}
       {hasCtx && (
         <div className="flex items-center gap-3 text-base">
-          <span className="flex-1 min-w-0 h-3 bg-ink-raised rounded-full overflow-hidden border border-ink-line">
+          <span className="relative flex-1 min-w-0 h-2.5 bg-ink-raised overflow-hidden">
             <span
-              className={`block h-full rounded-full ${hot ? 'bg-warn' : 'bg-accent'}`}
-              style={{ width: `${pct * 100}%` }}
+              className={`block h-full ${hot ? 'bg-warn' : 'bg-hud'}`}
+              style={{
+                width: `${pct * 100}%`,
+                boxShadow: hot ? '0 0 10px rgba(217,164,65,0.8)' : '0 0 10px rgba(111,211,232,0.8)',
+              }}
+            />
+            {/* Scale ticks, cut out of the channel every 40px. */}
+            <span
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                backgroundImage: 'linear-gradient(90deg, #05070a 1px, transparent 1px)',
+                backgroundSize: '40px 100%',
+              }}
             />
           </span>
-          <span className={`tabular-nums shrink-0 ${hot ? 'text-warn' : 'text-ink-text'}`}>
+          <span
+            className={`font-display font-bold tabular-nums shrink-0 ${
+              hot ? 'text-warn' : 'text-hud'
+            }`}
+          >
             {Math.round(pct * 100)}%
           </span>
-          <span className="text-ink-faint tabular-nums shrink-0">
+          <span className="text-xs text-ink-faint tabular-nums shrink-0">
             {tokens(focus!.contextTokens!)} / {tokens(focus!.contextLimit!)}
           </span>
         </div>

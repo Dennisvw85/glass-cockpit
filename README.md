@@ -1,4 +1,10 @@
-# Claude Cockpit
+# Claude Cockpit — HUD
+
+> A modified build of **[hungnv26/claude-cockpit](https://github.com/hungnv26/claude-cockpit)**
+> by Hung Ngo, MIT-licensed. This copy restyles the board as a vector HUD and adds a
+> panel for [Antigravity](https://antigravity.google) (`agy`) delegation.
+> All of the original engineering — the session watcher, the usage poller, the
+> console, the launchd service — is Hung Ngo's work. See [License](#license).
 
 ![Platform](https://img.shields.io/badge/platform-macOS-8a8a93)
 ![Built for](https://img.shields.io/badge/built%20for-iPad%20Mini%204%20%C2%B7%20iPhone%2011-d97757)
@@ -14,20 +20,59 @@ of your usage limits you've burned, what your live sessions are doing, and wheth
 you're about to hit a wall. It can also *drive* Claude Code sessions, not just
 watch them.
 
-![Claude Cockpit on an iPad Mini 4, landscape](docs/ipad.PNG)
+![The board in landscape, on an iPad](docs/board-landscape.png)
 
 <p align="center">
-  <img src="docs/iphone.PNG" alt="Claude Cockpit on an iPhone 11, portrait" width="300">
+  <img src="docs/board-portrait.png" alt="The board in portrait, on a phone" width="300">
 </p>
 
 <p align="center">
-  <em>One board, two layouts — landscape on the iPad, portrait on the phone.</em>
+  <em>One board, two layouts — landscape on the iPad, portrait on the phone.
+  Screenshots use synthetic session data.</em>
 </p>
 
 > Built to run on a **2015 iPad Mini 4** (iPadOS 15, Safari 15) sitting beside a
 > desktop monitor, with a portrait layout for an **iPhone 11**. Most of the
 > non-obvious engineering choices exist to make a modern dashboard render cleanly
 > on that decade-old browser.
+
+---
+
+## What this copy changes
+
+- **A vector-HUD skin.** Cyan hairlines, bracketed panel corners, tick-ring
+  gauges and a faint survey grid, with Chakra Petch for the chrome (it falls back
+  to the system mono stack when offline). The information architecture is
+  unchanged — only how it reads from across a room.
+- **An agy delegation panel.** Reports what was handed to
+  [Antigravity](https://antigravity.google) and what that avoided paying on the
+  orchestrator model. See below.
+- Scrollbars are hidden (nobody scrolls a wall display), and a flex overflow that
+  pushed the activity rail off-screen is fixed.
+
+### The agy panel
+
+It reads two independent sources, because a given setup usually produces only one:
+
+| Source | Written by |
+|---|---|
+| `~/.claude/agy-usage.log` | `agy-delegate` on every **synchronous** run, when `AGY_USAGE_LOG` is set |
+| `~/.antigravity-jobs/` | `agy-job start`, for **background** jobs |
+
+It leads with spend avoided rather than a quota gauge, because **agy exposes no
+usage or rate-limit API** — there is no `agy usage` subcommand and the desktop app
+stores only Electron state, so a limit ring would be fiction.
+
+Two honest caveats, both surfaced in the UI:
+
+- **Costs are estimates** (`EST`). They are priced from the plugin's own
+  `prices.json` at the default **flash** tier, because neither source records a
+  tier per run. Work actually run at `--tier pro` therefore reads low.
+- **Totals are cumulative, not daily.** The usage log carries no per-line
+  timestamps; only the file's mtime, which dates the most recent delegation.
+
+The panel hides itself entirely when nothing has been delegated, so a machine that
+never uses agy shows no dead space.
 
 ---
 
@@ -174,11 +219,13 @@ server/            Fastify + WebSocket backend (TypeScript, run via tsx)
   models.ts          live context-window sizes from the Models API
   agent.ts / agents.ts   spawns and drives owned Claude Code sessions
   permissions.ts     holds tool calls for iPad approval
+  agyjobs.ts         agy usage log + background-job registry     [added here]
   index.ts           HTTP/WS server, token gate, control endpoints
 
 src/               React + Tailwind frontend
   App.tsx            layout + view switching
   components/        LimitsHero, StatusBar, SessionCard, Feed, Console, …
+                     AgyPanel                                    [added here]
   ws.ts              WebSocket hook + shared types
 
 hooks/             Claude Code hooks that POST to the server
@@ -233,7 +280,10 @@ Claude Code actually behaves (each verified against the real CLI, not assumed):
 
 ## License
 
-[MIT](LICENSE) © Hung Ngo
+[MIT](LICENSE) © Hung Ngo — the original work, whose copyright notice is retained
+in full. This repository is a modified copy, redistributed under the same MIT
+terms; the modifications described in [What this copy changes](#what-this-copy-changes)
+are offered under those terms too.
 
 Not affiliated with Anthropic. It reads local files Claude Code writes and calls
 the same undocumented endpoints the CLI uses — those can change without notice.

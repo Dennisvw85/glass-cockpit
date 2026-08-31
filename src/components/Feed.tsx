@@ -16,42 +16,51 @@ const TAG_LABEL: Record<string, string> = {
   stop: 'turn done',
 }
 
-/** Only the blocked-on-you tags earn the accent; the rest stay quiet. */
+/** Only the blocked-on-you tags earn the warn colour; the rest stay quiet. */
 const LOUD = new Set(['permission_prompt', 'agent_needs_input'])
+
+/** Clock face for the log gutter — the HUD reads times, not "3m ago". */
+function clock(ts: number): string {
+  const d = new Date(ts)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
 
 export function Feed({ events, now, block }: Props) {
   return (
     <aside
       className={`flex flex-col ${
-        block ? 'w-full border-t border-ink-line' : 'w-64 shrink-0 border-l border-ink-line'
+        block ? 'w-full border-t border-ink-line' : 'hud-panel flex-1 min-h-0'
       }`}
     >
-      <h2 className="text-xs text-ink-faint px-3 py-2 border-b border-ink-line">
-        activity
-      </h2>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex items-center gap-2 px-3 py-2.5">
+        <h2 className="hud-label text-xs text-hud">log</h2>
+        <div className="hud-rule" />
+      </div>
+      <div className="flex-1 overflow-y-auto px-3">
         {events.length === 0 ? (
-          <p className="text-xs text-ink-faint px-3 py-2">Nothing yet.</p>
+          <p className="text-xs text-ink-faint">standing by.</p>
         ) : (
-          <ul>
+          <ul className="flex flex-col gap-2">
             {events.map((e) => (
-              <li key={e.id} className="px-3 py-2 border-b border-ink-line/50">
-                <div className="flex items-baseline justify-between gap-2">
+              <li key={e.id} className="flex flex-col gap-0.5">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xs text-ink-line tabular-nums shrink-0">
+                    {clock(e.ts)}
+                  </span>
                   <span
-                    className={`text-xs ${
-                      LOUD.has(e.tag) ? 'text-accent' : 'text-ink-muted'
+                    className={`text-xs truncate ${
+                      LOUD.has(e.tag) ? 'text-warn' : 'text-ink-muted'
                     }`}
                   >
                     {TAG_LABEL[e.tag] ?? e.tag}
                   </span>
-                  <span className="text-xs text-ink-faint tabular-nums shrink-0">
+                  <div className="flex-1" />
+                  <span className="text-xs text-ink-line tabular-nums shrink-0">
                     {ago(e.ts, now)}
                   </span>
                 </div>
                 {e.message && (
-                  <p className="text-xs text-ink-faint mt-0.5 line-clamp-2">
-                    {e.message}
-                  </p>
+                  <p className="text-xs text-ink-faint line-clamp-2 pl-[3.25rem]">{e.message}</p>
                 )}
               </li>
             ))}

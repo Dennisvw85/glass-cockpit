@@ -5,7 +5,8 @@ import { Limits } from './limits.ts'
 import { ModelCatalog } from './models.ts'
 import { AgentRegistry } from './agents.ts'
 import { PermissionBroker } from './permissions.ts'
-import type { SessionView, ServerMessage } from './types.ts'
+import { readAgy } from './agyjobs.ts'
+import type { SessionView, ServerMessage, AgyView } from './types.ts'
 
 /**
  * The iPad Mini 4 is a 2015 A8 with 2GB of RAM. A socket that fires on every
@@ -30,6 +31,16 @@ export class Hub {
   private stopWatch: (() => void) | null = null
   private poll: NodeJS.Timeout | null = null
   private snapshot: SessionView[] = []
+  private agy: AgyView = {
+    available: false,
+    jobs: [],
+    activeCount: 0,
+    doneCount: 0,
+    delegations: 0,
+    spentUsd: null,
+    savedUsd: null,
+    lastAt: null,
+  }
 
   constructor() {
     this.tailer = new Tailer(
@@ -79,6 +90,7 @@ export class Hub {
       limits: this.limits.current(),
       agents: this.agents.views(),
       permissions: this.permissions.list(),
+      agy: this.agy,
     }
   }
 
@@ -91,6 +103,7 @@ export class Hub {
   }
 
   private async refresh(): Promise<void> {
+    this.agy = await readAgy()
     const metas = await scanSessions()
     const live = metas.filter((m) => isAlive(m.pid))
     const liveIds = new Set(live.map((m) => m.sessionId))

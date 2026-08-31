@@ -51,6 +51,31 @@ export interface LimitsView {
   fetchedAt: number | null
 }
 
+export interface AgyJobView {
+  id: string
+  task: string
+  cwd: string
+  startedAt: number | null
+  status: 'running' | 'done' | 'failed'
+  rc: number | null
+  tokens: number | null
+  costUsd: number | null
+  estimated: boolean
+}
+
+export interface AgyView {
+  available: boolean
+  jobs: AgyJobView[]
+  activeCount: number
+  doneCount: number
+  /** Synchronous delegations recorded in the usage log (cumulative, not today). */
+  delegations: number
+  spentUsd: number | null
+  /** What the same tokens would have cost on the orchestrator model, minus spend. */
+  savedUsd: number | null
+  lastAt: number | null
+}
+
 export interface PendingPermission {
   id: string
   sessionId: string | null
@@ -103,6 +128,17 @@ export function resolveToken(): string | null {
   return localStorage.getItem(TOKEN_KEY)
 }
 
+const EMPTY_AGY: AgyView = {
+  available: false,
+  jobs: [],
+  activeCount: 0,
+  doneCount: 0,
+  delegations: 0,
+  spentUsd: null,
+  savedUsd: null,
+  lastAt: null,
+}
+
 const EMPTY_LIMITS: LimitsView = {
   state: 'no-token',
   detail: null,
@@ -116,6 +152,7 @@ export function useCockpit() {
   const [permissions, setPermissions] = useState<PendingPermission[]>([])
   const [events, setEvents] = useState<CockpitEvent[]>([])
   const [limits, setLimits] = useState<LimitsView>(EMPTY_LIMITS)
+  const [agy, setAgy] = useState<AgyView>(EMPTY_AGY)
   const [updatedAt, setUpdatedAt] = useState(0)
   const [connected, setConnected] = useState(false)
   const [authError, setAuthError] = useState(false)
@@ -149,6 +186,7 @@ export function useCockpit() {
           setPermissions(msg.permissions ?? [])
           setEvents(msg.events ?? [])
           setLimits(msg.limits ?? EMPTY_LIMITS)
+          setAgy(msg.agy ?? EMPTY_AGY)
           setUpdatedAt(msg.ts ?? Date.now())
         } catch {
           /* ignore malformed frame */
@@ -176,5 +214,5 @@ export function useCockpit() {
     }
   }, [])
 
-  return { sessions, agents, permissions, events, limits, updatedAt, connected, authError }
+  return { sessions, agents, permissions, events, limits, agy, updatedAt, connected, authError }
 }

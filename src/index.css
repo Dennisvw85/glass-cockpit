@@ -18,4 +18,64 @@
     overscroll-behavior: none;
     -webkit-touch-callout: none;
   }
+
+  /* Nobody scrolls a wall display with a mouse, and a grey scrollbar track cuts
+     straight through the HUD's vector language. Panels still scroll by touch. */
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+  * {
+    scrollbar-width: none;
+  }
+}
+
+@layer components {
+  /* The HUD's structural motif: a hairline box with a bracket cut into two
+     opposite corners. Pseudo-elements rather than an SVG so it costs nothing to
+     repeat and inherits the border colour. */
+  .hud-panel {
+    @apply relative border border-ink-line;
+  }
+  .hud-panel::before,
+  .hud-panel::after {
+    content: '';
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border: 1px solid #6fd3e8;
+    opacity: 0.75;
+    pointer-events: none;
+  }
+  .hud-panel::before {
+    top: -1px;
+    left: -1px;
+    border-right: 0;
+    border-bottom: 0;
+  }
+  .hud-panel::after {
+    bottom: -1px;
+    right: -1px;
+    border-left: 0;
+    border-top: 0;
+  }
+
+  /* Section label: the small tracked-out caps used for every heading. */
+  .hud-label {
+    @apply font-display uppercase tracking-[0.18em];
+  }
+
+  /* Faint survey grid behind the whole board — reads as depth from across the
+     room without competing with anything on top of it. */
+  .hud-grid {
+    background-image:
+      linear-gradient(rgba(111, 211, 232, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(111, 211, 232, 0.035) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* A hairline that runs out from a heading to fill the row. */
+  .hud-rule {
+    @apply flex-1 h-px bg-ink-line;
+  }
 }

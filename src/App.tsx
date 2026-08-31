@@ -4,6 +4,7 @@ import { Density } from './components/Density.tsx'
 import { LimitsHero } from './components/LimitsHero.tsx'
 import { StatusBar, type Focus } from './components/StatusBar.tsx'
 import { Feed } from './components/Feed.tsx'
+import { AgyPanel } from './components/AgyPanel.tsx'
 import { Console } from './components/Console.tsx'
 import { Permissions } from './components/Permissions.tsx'
 import { beep, unlockAudio } from './alert.ts'
@@ -30,7 +31,7 @@ type Layout = 'ipad' | 'iphone'
 const PORTRAIT_SESSIONS = 2
 
 export function App() {
-  const { sessions, agents, permissions, events, limits, connected, authError } = useCockpit()
+  const { sessions, agents, permissions, events, limits, agy, connected, authError } = useCockpit()
   const now = useClock(1000)
   const [sound, setSound] = useState(() => localStorage.getItem(SOUND_KEY) === '1')
   const [view, setView] = useState<View>(
@@ -106,7 +107,7 @@ export function App() {
 
   return (
     <div
-      className={`h-screen flex flex-col overflow-hidden ${
+      className={`h-screen flex flex-col overflow-hidden hud-grid ${
         layout === 'iphone' ? 'max-w-[430px] mx-auto border-x border-ink-line' : ''
       }`}
     >
@@ -114,20 +115,23 @@ export function App() {
         className="flex items-center justify-between gap-x-3 gap-y-1 flex-wrap px-3 pb-2 border-b border-ink-line shrink-0"
         style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
       >
-        <div className="flex items-baseline gap-2">
-          <h1 className="text-base">Cockpit</h1>
+        <div className="flex items-baseline gap-3">
+          <h1 className="hud-label text-lg font-bold text-hud">◆ Cockpit</h1>
+          <span className="self-center w-px h-5 bg-ink-line" />
           {(['monitor', 'console'] as const).map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
-              className={`text-xs px-2 min-h-[44px] ${v === view ? 'text-accent' : 'text-ink-faint'}`}
+              className={`hud-label text-xs px-2 min-h-[44px] ${
+                v === view ? 'text-hud' : 'text-ink-faint'
+              }`}
             >
               {v}
             </button>
           ))}
           {blockedCount + permissions.length > 0 && (
-            <span className="text-xs text-accent">
-              {blockedCount + permissions.length} needs you
+            <span className="hud-label text-xs text-warn">
+              ▲ {blockedCount + permissions.length} needs you
             </span>
           )}
         </div>
@@ -138,8 +142,8 @@ export function App() {
                 key={d}
                 onClick={() => setLayout(d)}
                 title={d === 'ipad' ? 'iPad Mini 4 · landscape' : 'iPhone 11 · portrait'}
-                className={`px-3 min-h-[44px] rounded border text-xs ${
-                  d === layout ? 'border-accent text-accent' : 'border-ink-line text-ink-faint'
+                className={`hud-label px-3 min-h-[44px] border text-xs ${
+                  d === layout ? 'border-hud text-hud' : 'border-ink-line text-ink-faint'
                 }`}
               >
                 {d === 'ipad' ? 'iPad' : 'iPhone'}
@@ -148,17 +152,15 @@ export function App() {
           </div>
           <button
             onClick={toggleSound}
-            className={`px-3 min-h-[44px] rounded border text-xs ${
-              sound ? 'border-accent text-accent' : 'border-ink-line text-ink-faint'
+            className={`hud-label px-3 min-h-[44px] border text-xs ${
+              sound ? 'border-hud text-hud' : 'border-ink-line text-ink-faint'
             }`}
           >
             sound {sound ? 'on' : 'off'}
           </button>
           <Density />
           <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              connected ? 'bg-accent' : 'bg-ink-faint'
-            }`}
+            className={`w-1.5 h-1.5 ${connected ? 'bg-go' : 'bg-ink-faint'}`}
             title={connected ? 'connected' : 'reconnecting'}
           />
         </div>
@@ -181,8 +183,8 @@ export function App() {
           <LimitsHero limits={limits} now={now} compact />
           <div className="border-t border-ink-line p-3">
             {sessions.length === 0 ? (
-              <p className="text-ink-faint text-sm">
-                {connected ? 'No live Claude Code sessions.' : 'Connecting…'}
+              <p className="hud-label text-ink-faint text-xs">
+                {connected ? 'no active sessions' : 'acquiring link…'}
               </p>
             ) : (
               <div className="flex flex-col gap-3">
@@ -198,17 +200,27 @@ export function App() {
               </div>
             )}
           </div>
+          <div className="px-3 pb-3">
+            <AgyPanel agy={agy} now={now} />
+          </div>
           <Feed events={events} now={now} block />
         </div>
       ) : (
         // Landscape: gauges over a two-column [sessions | feed].
         <div className="flex-1 flex flex-col min-h-0">
           <LimitsHero limits={limits} now={now} />
-          <div className="flex-1 flex min-h-0 border-t border-ink-line">
-            <main className="flex-1 p-3 overflow-y-auto">
+          <div className="flex-1 flex min-h-0 gap-3 px-3 pb-3">
+            <main className="hud-panel flex-1 min-w-0 p-3 overflow-y-auto overflow-x-hidden flex flex-col">
+              <div className="flex items-center gap-2 mb-2.5">
+                <h2 className="hud-label text-xs text-hud">active sessions</h2>
+                <div className="hud-rule" />
+                <span className="hud-label text-xs text-ink-faint tabular-nums">
+                  {String(sessions.length).padStart(2, '0')}
+                </span>
+              </div>
               {sessions.length === 0 ? (
-                <p className="text-ink-faint text-sm">
-                  {connected ? 'No live Claude Code sessions.' : 'Connecting…'}
+                <p className="hud-label text-ink-faint text-xs">
+                  {connected ? 'no active sessions' : 'acquiring link…'}
                 </p>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -218,7 +230,10 @@ export function App() {
                 </div>
               )}
             </main>
-            <Feed events={events} now={now} />
+            <div className="w-64 shrink-0 flex flex-col gap-3 min-h-0">
+              <AgyPanel agy={agy} now={now} />
+              <Feed events={events} now={now} />
+            </div>
           </div>
         </div>
       )}
