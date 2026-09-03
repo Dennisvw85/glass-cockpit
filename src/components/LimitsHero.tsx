@@ -33,23 +33,26 @@ function Gauge({
   compact?: boolean
 }) {
   const p = Math.max(0, Math.min(100, pct)) / 100
-  const stroke = hot ? '#d9a441' : accent ? '#d97757' : '#6fd3e8'
+  const stroke = hot ? 'var(--c-warn)' : accent ? 'var(--c-accent)' : 'var(--c-primary)'
   const box = compact ? '6rem' : '9.5rem'
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="relative" style={{ width: box, height: box }}>
         <svg viewBox="0 0 100 100" className="w-full h-full">
+          {/* Instrument bezel. Classed so a theme with no decorative language
+              can drop it — see the plain theme in index.css. */}
           <circle
+            className="hud-ticks"
             cx="50"
             cy="50"
             r={TICK_R}
             fill="none"
-            stroke="#6fd3e8"
+            stroke="var(--c-primary)"
             strokeOpacity="0.3"
             strokeWidth="4"
             strokeDasharray={`${TICK_ON} ${TICK_GAP}`}
           />
-          <circle cx="50" cy="50" r={R} fill="none" stroke="#6fd3e8" strokeOpacity="0.13" strokeWidth="7" />
+          <circle cx="50" cy="50" r={R} fill="none" stroke="var(--c-primary)" strokeOpacity="0.13" strokeWidth="7" />
           <circle
             cx="50"
             cy="50"

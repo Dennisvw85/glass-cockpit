@@ -46,7 +46,7 @@ export function StatusBar({ connected, focus }: Props) {
           {/* Square, not round: the HUD has no soft edges. */}
           <span
             className={`w-2 h-2 ${connected ? 'bg-go' : 'bg-warn animate-pulse'}`}
-            style={connected ? { boxShadow: '0 0 8px #7ee787' } : undefined}
+            style={connected ? { boxShadow: 'var(--glow-go)' } : undefined}
           />
           <span className={`hud-label text-xs ${connected ? 'text-go' : 'text-warn'}`}>
             {connected ? 'live' : 'offline'}
@@ -81,14 +81,14 @@ export function StatusBar({ connected, focus }: Props) {
               className={`block h-full ${hot ? 'bg-warn' : 'bg-hud'}`}
               style={{
                 width: `${pct * 100}%`,
-                boxShadow: hot ? '0 0 10px rgba(217,164,65,0.8)' : '0 0 10px rgba(111,211,232,0.8)',
+                boxShadow: hot ? 'var(--glow-warn)' : 'var(--glow-primary)',
               }}
             />
             {/* Scale ticks, cut out of the channel every 40px. */}
             <span
               className="absolute inset-0 pointer-events-none"
               style={{
-                backgroundImage: 'linear-gradient(90deg, #05070a 1px, transparent 1px)',
+                backgroundImage: 'linear-gradient(90deg, var(--c-bg) 1px, transparent 1px)',
                 backgroundSize: '40px 100%',
               }}
             />

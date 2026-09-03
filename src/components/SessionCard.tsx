@@ -31,7 +31,7 @@ export function SessionCard({ session, now, solo, compact }: Props) {
   const waiting = session.attention === 'idle' || session.attention === 'done'
 
   // The status rail down the left edge carries the whole state read at a glance.
-  const rail = blocked ? '#d9a441' : idle ? '#5f7d88' : '#7ee787'
+  const rail = blocked ? 'var(--c-warn)' : idle ? 'var(--c-faint)' : 'var(--c-go)'
   const statusText = blocked ? 'text-warn' : waiting ? 'text-ink-muted' : 'text-go'
 
   const meta = (
@@ -90,7 +90,7 @@ export function SessionCard({ session, now, solo, compact }: Props) {
       className={`flex flex-col gap-1.5 py-2.5 pl-3 pr-3 ${solo ? 'h-full' : ''}`}
       style={{
         borderLeft: `2px solid ${rail}`,
-        background: blocked ? 'rgba(217,164,65,0.07)' : 'rgba(111,211,232,0.045)',
+        background: blocked ? 'var(--c-card-blocked)' : 'var(--c-card)',
       }}
     >
       {header}
