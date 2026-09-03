@@ -39,7 +39,10 @@ function Gauge({
     <div className="flex flex-col items-center gap-1">
       <div className="relative" style={{ width: box, height: box }}>
         <svg viewBox="0 0 100 100" className="w-full h-full">
+          {/* Instrument bezel. Classed so a theme with no decorative language
+              can drop it — see the plain theme in index.css. */}
           <circle
+            className="hud-ticks"
             cx="50"
             cy="50"
             r={TICK_R}

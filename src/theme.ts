@@ -34,6 +34,20 @@ export const THEMES: Theme[] = [
     themeColor: '#ded0ac',
     scheme: 'light',
   },
+  {
+    id: 'rampart',
+    label: 'Rampart',
+    note: 'Heraldry on coursed granite — gold, gules, torchlight.',
+    themeColor: '#24282e',
+    scheme: 'dark',
+  },
+  {
+    id: 'plain',
+    label: 'Plain',
+    note: 'No motif — system face, graphite meters, one blue.',
+    themeColor: '#f6f7f8',
+    scheme: 'light',
+  },
 ]
 
 const DEFAULT = THEMES[0].id

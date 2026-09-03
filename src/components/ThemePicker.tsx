@@ -1,29 +1,24 @@
 import { THEMES, useTheme } from '../theme.ts'
 
 /**
- * Sits beside the density control, and matches its shape deliberately: same
- * 44px touch target, same selected-state treatment. Two settings that both
- * change how the board looks should not look like two different kinds of
- * control.
+ * One cycling button rather than one button per theme: the header already runs
+ * out of room on the iPad Mini's 1024px landscape, and a row of named buttons
+ * grows with every theme added while this does not. Shape matches the sound
+ * toggle beside it — both are "tap to change what the board does".
  */
 export function ThemePicker() {
   const [theme, setTheme] = useTheme()
+  const i = Math.max(0, THEMES.findIndex((t) => t.id === theme))
+  const current = THEMES[i]
+  const next = THEMES[(i + 1) % THEMES.length]
 
   return (
-    <div className="flex items-center gap-1">
-      {THEMES.map((t) => (
-        <button
-          key={t.id}
-          onClick={() => setTheme(t.id)}
-          title={t.note}
-          aria-pressed={t.id === theme}
-          className={`px-3 min-h-[44px] border text-xs hud-label ${
-            t.id === theme ? 'border-accent text-accent' : 'border-ink-line text-ink-faint'
-          }`}
-        >
-          {t.label}
-        </button>
-      ))}
-    </div>
+    <button
+      onClick={() => setTheme(next.id)}
+      title={`${current.note} — tap for ${next.label}`}
+      className="hud-label px-3 min-h-[44px] border text-xs border-ink-line text-ink-muted"
+    >
+      {current.label}
+    </button>
   )
 }

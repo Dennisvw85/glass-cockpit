@@ -44,6 +44,9 @@
 
   --font-display: 'Chakra Petch', ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-body: ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Split from --font-display so a theme can carry an ornate display face
+     without forcing it through every tracked-out caps label on the board. */
+  --font-label: 'Chakra Petch', ui-monospace, SFMono-Regular, Menlo, monospace;
   --label-tracking: 0.18em;
 
   --radius: 0px;
@@ -84,9 +87,91 @@
 
   --font-display: 'Cinzel', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --font-body: 'EB Garamond', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-label: 'Cinzel', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --label-tracking: 0.22em;
 
   --radius: 0px;
+}
+
+/* ── Rampart ─────────────────────────────────────────────────────────────
+   The keep rather than the library: coursed granite, iron rules, and colour
+   taken straight from heraldry — or for the meters, gules for emphasis, vert
+   for healthy, purpure for agy. Warm candlelit text on cold stone, because a
+   hall is lit by fire and walled in rock, and the contrast between those two
+   is the whole look. Glows stay, unlike the grimoire: torchlight does bloom.
+   ──────────────────────────────────────────────────────────────────────── */
+[data-theme='rampart'] {
+  --c-bg: #24282e;
+  --c-surface: rgba(206, 210, 216, 0.045);
+  --c-raised: rgba(206, 210, 216, 0.1);
+  --c-line: rgba(206, 210, 216, 0.22);
+  --c-text: #e8e3d7;
+  --c-muted: #a79e8d;
+  --c-faint: #7f7867;
+
+  --c-primary: #c9a227; /* or — gold leaf on the banners */
+  --c-agy: #9271c2; /* purpure */
+  --c-go: #74a256; /* vert */
+  --c-accent: #b8323d; /* gules */
+  --c-warn: #d18b2c; /* torch amber */
+
+  --c-card: rgba(201, 162, 39, 0.05);
+  --c-card-blocked: rgba(184, 50, 61, 0.13);
+  --c-track: rgba(206, 210, 216, 0.15);
+
+  --glow-go: 0 0 8px rgba(116, 162, 86, 0.5);
+  --glow-primary: 0 0 12px rgba(201, 162, 39, 0.55);
+  --glow-warn: 0 0 10px rgba(209, 139, 44, 0.6);
+
+  --font-display: 'Grenze Gotisch', 'Cinzel', Georgia, serif;
+  --font-body: 'Spectral', 'Iowan Old Style', Palatino, Georgia, serif;
+  /* Blackletter caps tracked out at 11px are decoration, not information, so
+     the labels stay on the inscriptional face and only the headline numbers
+     and the wordmark get the gothic. */
+  --font-label: 'Cinzel', Georgia, serif;
+  --label-tracking: 0.2em;
+
+  --radius: 0px;
+}
+
+/* ── Plain ───────────────────────────────────────────────────────────────
+   No motif at all: no grid, no corner marks, no bloom, and the system UI face
+   so it renders identically the moment it loads. Near-monochrome, with the
+   meters drawn in graphite so the data is the only ink on the page and a
+   single blue reserved for what the board wants you to notice.
+   ──────────────────────────────────────────────────────────────────────── */
+[data-theme='plain'] {
+  --c-bg: #f6f7f8;
+  --c-surface: rgba(17, 20, 24, 0.03);
+  --c-raised: rgba(17, 20, 24, 0.07);
+  --c-line: rgba(17, 20, 24, 0.13);
+  --c-text: #14181d;
+  --c-muted: #5b6570;
+  --c-faint: #8b95a1;
+
+  --c-primary: #1f2937; /* graphite — the meters are data, not decoration */
+  --c-agy: #7c3aed;
+  --c-go: #15803d;
+  --c-accent: #2563eb;
+  --c-warn: #b45309;
+
+  --c-card: rgba(17, 20, 24, 0.028);
+  --c-card-blocked: rgba(180, 83, 9, 0.09);
+  --c-track: rgba(17, 20, 24, 0.1);
+
+  --glow-go: none;
+  --glow-primary: none;
+  --glow-warn: none;
+
+  --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-label: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* Caps this tight only work because the face is a grotesque; the tracked-out
+     0.18em the HUD needs would read as shouting here. */
+  --label-tracking: 0.08em;
+
+  --radius: 8px;
 }
 
 @layer base {
@@ -128,6 +213,7 @@
      repeat and inherits the border colour. */
   .hud-panel {
     @apply relative border border-ink-line;
+    border-radius: var(--radius);
   }
   .hud-panel::before,
   .hud-panel::after {
@@ -168,7 +254,7 @@
 
   /* Section label: the small tracked-out caps used for every heading. */
   .hud-label {
-    font-family: var(--font-display);
+    font-family: var(--font-label);
     @apply uppercase;
     letter-spacing: var(--label-tracking);
   }
@@ -201,6 +287,38 @@
         transparent 6px
       );
     background-size: 100% 100%;
+  }
+
+  /* Coursed granite. Running bond would need the joints to alternate row to
+     row, which one background layer cannot express — so the courses carry the
+     stone and broad washes stand in for uneven torchlight across the wall. */
+  [data-theme='rampart'] .hud-grid {
+    background-image:
+      radial-gradient(50% 40% at 12% 8%, rgba(209, 139, 44, 0.08), transparent 70%),
+      radial-gradient(45% 38% at 88% 18%, rgba(201, 162, 39, 0.055), transparent 72%),
+      radial-gradient(60% 50% at 55% 95%, rgba(0, 0, 0, 0.22), transparent 70%),
+      repeating-linear-gradient(
+        0deg,
+        rgba(206, 210, 216, 0.05) 0px,
+        rgba(206, 210, 216, 0.05) 1px,
+        transparent 1px,
+        transparent 46px
+      );
+    background-size: 100% 100%;
+  }
+
+  /* Plain has no motif by design: the panel is a rounded hairline box and the
+     ground is flat. Both corner marks and the backdrop come off. */
+  [data-theme='plain'] .hud-panel::before,
+  [data-theme='plain'] .hud-panel::after {
+    display: none;
+  }
+  [data-theme='plain'] .hud-grid {
+    background-image: none;
+  }
+  /* The tick bezel is instrument decoration; a clean board shows the arc alone. */
+  [data-theme='plain'] .hud-ticks {
+    display: none;
   }
 
   /* A hairline that runs out from a heading to fill the row. */
