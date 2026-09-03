@@ -35,15 +35,15 @@ it needing a click.
 
 ## The instrument panel
 
-Everything is drawn in one visual language: hairline boxes with the corners cut
-away, tick rings around every gauge, tracked-out caps for labels, and a survey
-grid so faint you notice it only as depth. One accent per meaning and no more —
-cyan is structure, green is running, amber is *you are the bottleneck*, violet is
-delegated work.
+Everything is drawn in one visual language, and one accent carries one meaning
+throughout — structure, running, *you are the bottleneck*, delegated work. Which
+four colours those are is up to the theme; the default HUD draws them as hairline
+boxes with the corners cut away, tick rings around every gauge, tracked-out caps
+for labels, and a survey grid so faint you notice it only as depth.
 
 | | |
 |---|---|
-| **Rate limits** | Your 5-hour and 7-day windows as tick-ring gauges, each counting down to reset. They go amber near the ceiling. |
+| **Rate limits** | Your 5-hour and 7-day windows as ring gauges, each counting down to reset. They go amber near the ceiling. |
 | **Sessions** | Every live Claude Code session — the desktop app's included — with a status rail down the left edge you can read from two metres away. |
 | **Delegation** | What agy was handed and what that saved. Details below. |
 | **Log** | Session events as they land, timestamped like a flight recorder rather than "3m ago". |
@@ -52,6 +52,31 @@ delegated work.
 Tap **console** and it stops being a dashboard: spawn a session the board owns,
 prompt it, switch model or effort mid-conversation, and approve or deny tool calls
 from the couch.
+
+### Four themes
+
+The header cycles through them; the choice is remembered per device, and applies
+before first paint so the board never flashes in the previous theme's colours.
+
+| | |
+|---|---|
+| **HUD** | The default. Backlit glass instrument — cyan vectors on near-black, and the only theme that glows. |
+| **Grimoire** | Ink on vellum. Parchment ground with gradient staining and laid lines, gilt meters, oxblood emphasis, Cinzel over EB Garamond. Panels drop the targeting brackets for the double rule a book plate is framed with. |
+| **Rampart** | The keep rather than the library. Coursed granite, heraldic colour — *or*, *gules*, *vert*, *purpure* — and warm candlelit text on cold stone. It keeps the glows, because torchlight does bloom. |
+| **Plain** | No motif at all: no grid, no corner marks, no tick bezel, no bloom. Graphite meters so the data is the only ink, one blue for what wants noticing, and the system UI face. |
+
+Every colour, typeface and motif resolves through a CSS variable, so a theme is
+one block in `src/index.css` that redefines them — no component knows a theme
+exists, because they ask for `--c-primary` rather than for cyan. Adding a fifth
+means an entry in `src/theme.ts` and a matching `[data-theme]` block, and nothing
+else. The HUD is what `:root` holds, so an unknown or missing theme still renders
+the original board.
+
+Two notes if you write one. Book and gothic faces default to old-style numerals
+that refuse to line up in a column, which is why `tabular-nums` is forced on the
+body. And a light theme wants a deeper ground than looks right on your desk: this
+is read from across a room, and pale parchment gives the ink nothing to bite
+against.
 
 ### Delegation, priced honestly
 
@@ -148,17 +173,19 @@ server/                Fastify + WebSocket, TypeScript via tsx
 
 src/                   React + Tailwind
   App.tsx                layout and view switching
+  theme.ts             ← the theme registry: the only place a theme is named
   components/AgyPanel  ← the delegation panel
+  components/ThemePicker ← the header's cycling theme button
   components/            LimitsHero, SessionCard, Feed, StatusBar, Console
-  index.css              the HUD primitives: brackets, grid, rules, labels
+  index.css              theme variable blocks, then the motifs built on them
 
 hooks/                 Claude Code hooks that POST events in
 service/               launchd plist generator and logs
 ```
 
-The skin lives almost entirely in `tailwind.config.js` and `src/index.css` — four
-utility classes and a palette. If you want the original look back, those two files
-are most of the way there.
+The skin lives almost entirely in `src/index.css` and `src/theme.ts` — four
+utility classes and a variable block per theme. `tailwind.config.js` only maps the
+semantic colour names onto those variables and holds nothing theme-specific.
 
 ---
 
