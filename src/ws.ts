@@ -146,6 +146,15 @@ const EMPTY_LIMITS: LimitsView = {
   fetchedAt: null,
 }
 
+/**
+ * The hub broadcasts at least every 5s (its liveness poll), so a gap much
+ * longer than that means the link is dead even if the socket still says OPEN.
+ * iOS Safari freezes a backgrounded tab's socket without ever firing `close`,
+ * so the readyState alone would keep the gauges showing a days-old snapshot.
+ */
+const STALE_MS = 20_000
+const WATCHDOG_MS = 5_000
+
 export function useCockpit() {
   const [sessions, setSessions] = useState<SessionView[]>([])
   const [agents, setAgents] = useState<AgentView[]>([])
@@ -157,11 +166,38 @@ export function useCockpit() {
   const [connected, setConnected] = useState(false)
   const [authError, setAuthError] = useState(false)
   const retry = useRef(0)
+  const lastFrame = useRef(0)
 
   useEffect(() => {
     let socket: WebSocket | null = null
     let timer: number | undefined
+    let watchdog: number | undefined
     let closed = false
+
+    /** Drop the current socket without letting its `close` schedule a retry. */
+    const teardown = () => {
+      if (!socket) return
+      socket.onopen = null
+      socket.onmessage = null
+      socket.onclose = null
+      socket.onerror = null
+      try {
+        socket.close()
+      } catch {
+        /* already gone */
+      }
+      socket = null
+    }
+
+    /** Reconnect now, bypassing the backoff — the link is known to be dead. */
+    const revive = () => {
+      if (closed) return
+      if (timer) clearTimeout(timer)
+      teardown()
+      setConnected(false)
+      retry.current = 0
+      connect()
+    }
 
     const connect = () => {
       const token = resolveToken()
@@ -174,6 +210,7 @@ export function useCockpit() {
 
       socket.onopen = () => {
         retry.current = 0
+        lastFrame.current = Date.now()
         setConnected(true)
         setAuthError(false)
       }
@@ -181,6 +218,7 @@ export function useCockpit() {
         try {
           const msg = JSON.parse(ev.data)
           if (msg.type !== 'snapshot') return
+          lastFrame.current = Date.now()
           setSessions(msg.sessions)
           setAgents(msg.agents ?? [])
           setPermissions(msg.permissions ?? [])
@@ -206,11 +244,28 @@ export function useCockpit() {
       socket.onerror = () => socket?.close()
     }
 
+    const isStale = () => Date.now() - lastFrame.current > STALE_MS
+
+    // A frozen socket reports OPEN forever; only the frame gap reveals it.
+    watchdog = window.setInterval(() => {
+      if (closed || !socket) return
+      if (socket.readyState === WebSocket.OPEN && isStale()) revive()
+    }, WATCHDOG_MS)
+
+    // Waking the iPad is the moment we most need a fresh snapshot.
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      if (!socket || socket.readyState !== WebSocket.OPEN || isStale()) revive()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+
     connect()
     return () => {
       closed = true
       if (timer) clearTimeout(timer)
-      socket?.close()
+      if (watchdog) clearInterval(watchdog)
+      document.removeEventListener('visibilitychange', onVisible)
+      teardown()
     }
   }, [])
 
