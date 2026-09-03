@@ -2,6 +2,93 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Themes.
+
+   Every colour, typeface and structural motif the board uses is declared as a
+   variable here; a theme is one block that redefines them. No component knows
+   a theme exists — it asks for --c-primary, not for cyan. :root carries the
+   HUD, so an unknown or absent data-theme still renders the original board.
+
+   The glow variables matter as much as the colours: neon bloom is what makes
+   the HUD read as a backlit instrument, and its absence is what makes the
+   grimoire read as ink on paper. A theme that wants flat ink sets them to
+   `none` rather than trying to pick a subtle colour.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:root,
+[data-theme='hud'] {
+  --c-bg: #05070a;
+  --c-surface: rgba(111, 211, 232, 0.045);
+  --c-raised: rgba(111, 211, 232, 0.08);
+  --c-line: rgba(111, 211, 232, 0.18);
+  --c-text: #dbe9ee;
+  --c-muted: #7d949c;
+  --c-faint: #5f7d88;
+
+  --c-primary: #6fd3e8;
+  --c-agy: #c58cf5;
+  --c-go: #7ee787;
+  --c-accent: #d97757;
+  --c-warn: #d9a441;
+
+  /* Panel tint behind a session card, calm and blocked. */
+  --c-card: rgba(111, 211, 232, 0.045);
+  --c-card-blocked: rgba(217, 164, 65, 0.07);
+  /* Unfilled remainder of a ring or bar. */
+  --c-track: #26262b;
+
+  --glow-go: 0 0 8px #7ee787;
+  --glow-primary: 0 0 10px rgba(111, 211, 232, 0.8);
+  --glow-warn: 0 0 10px rgba(217, 164, 65, 0.8);
+
+  --font-display: 'Chakra Petch', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-body: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --label-tracking: 0.18em;
+
+  --radius: 0px;
+}
+
+/* ── Grimoire ────────────────────────────────────────────────────────────
+   Ink on vellum, the way a fantasy hardback sets a page: a warm parchment
+   ground, sepia-black text, and rubricated headings — medieval scribes wrote
+   headings in red, which is where "rubric" comes from, and it is still the
+   fastest way to make a page read as a book rather than a screen. Gilt
+   carries the meters, oxblood the emphasis. No glows anywhere; paper does not
+   emit light, and a bloom here would read as a mistake.
+   ──────────────────────────────────────────────────────────────────────── */
+[data-theme='grimoire'] {
+  /* Aged deeper than a fresh sheet would be: this is read from across a room,
+     and a pale ground gives the ink nothing to bite against. */
+  --c-bg: #ded0ac;
+  --c-surface: rgba(58, 39, 22, 0.055);
+  --c-raised: rgba(58, 39, 22, 0.13);
+  --c-line: rgba(58, 39, 22, 0.4);
+  --c-text: #241a10;
+  --c-muted: #4e3c26;
+  --c-faint: #6b5638;
+
+  --c-primary: #7a5c1c; /* gilt — rings, bars, structural marks */
+  --c-agy: #4d2f63; /* violet ink */
+  --c-go: #3d5c2e; /* verdigris green */
+  --c-accent: #8a2b1d; /* oxblood rubric */
+  --c-warn: #97561a; /* ochre */
+
+  --c-card: rgba(58, 39, 22, 0.06);
+  --c-card-blocked: rgba(151, 86, 26, 0.15);
+  --c-track: rgba(58, 39, 22, 0.26);
+
+  --glow-go: none;
+  --glow-primary: none;
+  --glow-warn: none;
+
+  --font-display: 'Cinzel', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-body: 'EB Garamond', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --label-tracking: 0.22em;
+
+  --radius: 0px;
+}
+
 @layer base {
   html {
     /* 16px here == ~10px on a 102ppi desktop monitor, matched for apparent size
@@ -12,8 +99,13 @@
   }
 
   body {
-    @apply bg-ink-bg text-ink-text font-mono;
+    @apply bg-ink-bg text-ink-text;
+    font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
+    /* Every column of figures on this board is meant to line up, and the book
+       faces default to old-style proportional numerals that do not. */
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
     /* Kiosk panel: no rubber-band, no long-press callout. */
     overscroll-behavior: none;
     -webkit-touch-callout: none;
@@ -43,7 +135,7 @@
     position: absolute;
     width: 9px;
     height: 9px;
-    border: 1px solid #6fd3e8;
+    border: 1px solid var(--c-primary);
     opacity: 0.75;
     pointer-events: none;
   }
@@ -60,9 +152,25 @@
     border-top: 0;
   }
 
+  /* A book plate is framed by a double rule, not by targeting brackets: the
+     outer border stays, ::before becomes a second rule inset from it, and the
+     corner mark is retired. */
+  [data-theme='grimoire'] .hud-panel::before {
+    inset: 3px;
+    width: auto;
+    height: auto;
+    border: 1px solid var(--c-line);
+    opacity: 1;
+  }
+  [data-theme='grimoire'] .hud-panel::after {
+    display: none;
+  }
+
   /* Section label: the small tracked-out caps used for every heading. */
   .hud-label {
-    @apply font-display uppercase tracking-[0.18em];
+    font-family: var(--font-display);
+    @apply uppercase;
+    letter-spacing: var(--label-tracking);
   }
 
   /* Faint survey grid behind the whole board — reads as depth from across the
@@ -72,6 +180,27 @@
       linear-gradient(rgba(111, 211, 232, 0.035) 1px, transparent 1px),
       linear-gradient(90deg, rgba(111, 211, 232, 0.035) 1px, transparent 1px);
     background-size: 32px 32px;
+  }
+
+  /* Vellum instead of a survey grid: broad uneven staining from the radial
+     washes, then the fine horizontal laid lines a sheet picks up from the
+     papermaker's mould. Gradients only — an image would cost the A8 a decode
+     and this has to sit under everything all day. */
+  [data-theme='grimoire'] .hud-grid {
+    background-image:
+      radial-gradient(55% 42% at 14% 10%, rgba(92, 64, 30, 0.17), transparent 68%),
+      radial-gradient(45% 38% at 86% 22%, rgba(78, 54, 26, 0.15), transparent 70%),
+      radial-gradient(65% 52% at 58% 92%, rgba(92, 64, 30, 0.16), transparent 68%),
+      radial-gradient(38% 30% at 6% 72%, rgba(70, 48, 22, 0.14), transparent 72%),
+      radial-gradient(30% 26% at 94% 66%, rgba(70, 48, 22, 0.12), transparent 74%),
+      repeating-linear-gradient(
+        0deg,
+        rgba(58, 39, 22, 0.028) 0px,
+        rgba(58, 39, 22, 0.028) 1px,
+        transparent 1px,
+        transparent 6px
+      );
+    background-size: 100% 100%;
   }
 
   /* A hairline that runs out from a heading to fill the row. */

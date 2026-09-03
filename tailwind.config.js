@@ -3,27 +3,31 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      // Every colour resolves through a CSS variable so a theme can restyle the
+      // board by redefining them in one block (see the top of index.css). The
+      // names stay semantic — `hud` is "the primary structural accent", which is
+      // cyan on the HUD and gilt in the grimoire.
       colors: {
-        // One accent, minimal semantics. Everything else is neutral.
-        // HUD: near-black glass, cyan vector lines, amber for load, green for go.
         ink: {
-          bg: '#05070a',
-          surface: 'rgba(111,211,232,0.045)',
-          raised: 'rgba(111,211,232,0.08)',
-          line: 'rgba(111,211,232,0.18)',
-          text: '#dbe9ee',
-          muted: '#7d949c',
-          faint: '#5f7d88',
+          bg: 'var(--c-bg)',
+          surface: 'var(--c-surface)',
+          raised: 'var(--c-raised)',
+          line: 'var(--c-line)',
+          text: 'var(--c-text)',
+          muted: 'var(--c-muted)',
+          faint: 'var(--c-faint)',
         },
-        hud: '#6fd3e8',
-        agy: '#c58cf5',
-        go: '#7ee787',
-        accent: '#d97757',
-        warn: '#d9a441',
+        hud: 'var(--c-primary)',
+        agy: 'var(--c-agy)',
+        go: 'var(--c-go)',
+        accent: 'var(--c-accent)',
+        warn: 'var(--c-warn)',
+        track: 'var(--c-track)',
       },
       fontFamily: {
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
-        display: ['Chakra Petch', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        display: ['var(--font-display)'],
+        body: ['var(--font-body)'],
       },
     },
   },

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { SessionCard } from './components/SessionCard.tsx'
 import { Density } from './components/Density.tsx'
+import { ThemePicker } from './components/ThemePicker.tsx'
 import { LimitsHero } from './components/LimitsHero.tsx'
 import { StatusBar, type Focus } from './components/StatusBar.tsx'
 import { Feed } from './components/Feed.tsx'
@@ -158,6 +159,7 @@ export function App() {
           >
             sound {sound ? 'on' : 'off'}
           </button>
+          <ThemePicker />
           <Density />
           <span
             className={`w-1.5 h-1.5 ${connected ? 'bg-go' : 'bg-ink-faint'}`}

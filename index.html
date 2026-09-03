@@ -14,12 +14,15 @@
     <meta name="apple-mobile-web-app-title" content="Cockpit" />
     <meta name="theme-color" content="#05070a" />
     <meta name="color-scheme" content="dark" />
-    <!-- Display face for the HUD chrome. Falls back to the mono stack offline. -->
+    <!-- Faces for both themes, in one request: Chakra Petch for the HUD chrome,
+         Cinzel and EB Garamond for the grimoire. Each falls back to a stack that
+         holds the same character offline (mono for the HUD, Palatino/Georgia for
+         the book), so a cold boot without wifi still renders correctly. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap"
     />
   </head>
   <body>
